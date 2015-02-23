@@ -10,16 +10,38 @@ ADC = require ("adc") -- adc library
 local TEMP = {}
 
 function TEMP:new()
-   s = ADC:new()
-   s:init()
-   obj = {sensor = s}		-- initialize the new object
+   local s = ADC:new()
+   local active = false
+   cord.new(function() 
+       rv = s:init() 
+
+	  if (rv ~= 0) then
+		 print "Error initializing"
+	  else
+		 print "Done"
+		 active = true
+	  end
+   end)
+   local obj = {}		-- initialize the new object
+
+   obj.temp = 0
+   cord.new(function()
+      while (active == false) do
+         cord.await(storm.os.invokeLater, 250*storm.os.MILLISECOND)
+      end
+      while(active) do -- FIXME make inactive eventually
+         obj.temp = s:get()
+         cord.await(storm.os.invokeLater, 250*storm.os.MILLISECOND)
+      end
+   end)
+
    setmetatable(obj, self)	-- associate class methods
    self.__index = self
    return obj
 end
 
-function TEMP:readTemp()
-    return self.sensor:get()
+function TEMP:getTemp()
+    return self.temp
    -- temp_constant = 1 --XXX: Figure this out by testing...
    -- return storm.io.get(storm.io[self.pin]) * temp_constant
 end

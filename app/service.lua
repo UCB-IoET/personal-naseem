@@ -43,9 +43,9 @@ end
 
 a_socket = storm.net.udpsocket(service_announce,
 							function(payload, from, port)
-							   print (string.format("from %s port %d",from,port))
-							   local msg = storm.mp.unpack(payload)
-							   msg = print_msg(msg)
+							  -- print (string.format("from %s port %d",from,port))
+							  -- local msg = storm.mp.unpack(payload)
+							  -- msg = print_msg(msg)
 							end)
 
 local svc_manifest = {
@@ -59,7 +59,6 @@ local svc_manifest = {
 local svc_msg = storm.mp.pack(svc_manifest)
 storm.os.invokePeriodically(2*storm.os.SECOND,
 							function()
-							   print ("SENDING ANNOUNCEMENT")
 							   storm.net.sendto(
 								  a_socket,
 								  svc_msg,
@@ -98,9 +97,12 @@ b_socket = storm.net.udpsocket(service_invoke,
 							   elseif (cmd == "turnOff") then
 								toaster:off()
 							   elseif (cmd == "setTemperature") then
-								toaster:setTemp(args)
+								toaster:setTemp(args[1])
 							   elseif (cmd == "getTemperature") then
-								toaster:getTemp(args)
+								storm.net.sendto(b_socket,
+								storm.mp.pack(toaster:getTemp()),
+								from,
+								port)
 							   end
 							end)
 
